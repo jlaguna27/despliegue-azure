@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: glpi
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv001
+  namespace: glpi
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 40Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "volumeglpi"
+
+
+---
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc001
+  namespace: glpi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glpi-deployment
+  namespace: glpi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: glpi
+  template:
+    metadata:
+      labels:
+        app: glpi
+    spec:
+      containers:
+      - name: glpi
+        image: 'diouxx/glpi'
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: volglpi
+            mountPath: "/var/www/html/glpi"
+      volumes:
+      - name: volglpi
+        persistentVolumeClaim:
+          claimName: pvc001
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: glpi-service
+  namespace: glpi
+spec:
+  type: LoadBalancer
+  selector:
+    app: glpi
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 31335
