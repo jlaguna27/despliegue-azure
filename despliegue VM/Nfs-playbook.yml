@@ -1,0 +1,21 @@
+# Instalar Servidor Nfs y Cliente Nfs
+---
+- hosts: localhost
+  become: true
+  tasks:
+  - name: Install Nfs Server
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+        - nfs-kernel-server
+        - nfs-common
+
+  - name: ensure nfs service is running
+    service:
+      name: "{{ item }}"
+      state: started
+    with_items:
+      - nfs-kernel-server
